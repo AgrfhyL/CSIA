@@ -1,7 +1,7 @@
 import { auth } from "./firebaseConfig";
 import React, { useEffect, useState } from "react";
 import { Table, TableCell, TableContainer, TableBody, TableHead, TableRow, Button } from "@mui/material";
-import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { LinearProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
@@ -12,6 +12,24 @@ export function ViewBatches({ triggerRefresh }) {
     const [generating, setGenerating] = useState(false);
     const [loading, setLoading] = useState(false); // State to track manual reloads
     const navigate = useNavigate();
+
+
+    const handleDeleteBatch = async (batchID) => {
+        try {
+            // Ask user whether they are sure, giving them proceed and cancel options
+            const confirmDelete = window.confirm("Are you sure you want to delete this batch? This action cannot be undone.");
+            if (!confirmDelete) {
+                return; // If user cancels, exit the function
+            } else {
+                console.log("Deleting batch with ID:", batchID); // Debugging log
+            }
+            await deleteDoc(doc(db, "batches", batchID));
+            // After deletion, reload batches by calling on fetch function
+            fetchBatches(auth.currentUser.uid);
+        } catch (error) {
+            console.error("Error deleting batch:", error);
+        }
+    }
 
     // Function to fetch user details by ID
     const getUserWithID = async (userID) => {
@@ -162,6 +180,17 @@ export function ViewBatches({ triggerRefresh }) {
                             >
                                 <TableCell>{row.batchName}</TableCell>
                                 <TableCell>{row.timeCreated}</TableCell> {/* Render the formatted date */}
+                                <TableCell>
+                                    {/* Add a small cell to the right that shows a red and underlined "delete" when selected, "delete"
+                                    delete disappears when row not selected
+                                    */}
+                                    <span 
+                                        style={{ color: "red", textDecoration: "underline", cursor: "pointer" }}
+                                        onClick={() => handleDeleteBatch(row.batchID)}
+                                    >
+                                        Delete
+                                    </span>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
