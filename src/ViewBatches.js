@@ -23,7 +23,15 @@ export function ViewBatches({ triggerRefresh }) {
             } else {
                 console.log("Deleting batch with ID:", batchID); // Debugging log
             }
-            await deleteDoc(doc(db, "batches", batchID));
+            const docToDelete = doc(db, "batches", batchID);
+            const imagesSubcollection = collection(docToDelete, "images");
+            const imagesSnapshot = await getDocs(imagesSubcollection);
+            // Before deleting batch document, delete its images subcollection first by iterating through
+            // each doc
+            for (const imageDoc of imagesSnapshot.docs) {
+                await deleteDoc(imageDoc.ref);
+            }
+            await deleteDoc(docToDelete);
             // After deletion, reload batches by calling on fetch function
             fetchBatches(auth.currentUser.uid);
         } catch (error) {

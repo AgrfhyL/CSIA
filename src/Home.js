@@ -75,8 +75,12 @@ export function Home() {
     } else {
         return(
             <div>
-                <Upload />
-                <Logout />
+                <div>
+                    <Upload/>
+                </div>
+                <div>
+                    <Logout/>
+                </div>
                 <TextField label={auth.currentUser.email}/>
                 <TextField label={firstAndLastName}/>
                 <TextField label={'Role: ' + role.substring(0,1).toUpperCase() + role.substring(1)}/>
