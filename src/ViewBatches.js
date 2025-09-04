@@ -98,45 +98,58 @@ export function ViewBatches({ triggerRefresh }) {
         setGenerating(false);
     };
 
+    const docInfoExtraction = async (userID, fetchedRows, doc) => {
+        console.log("Batch found:", doc.data()); // Debugging log
+        // Per row data extraction (for each query document)
+        const data = doc.data();
+        const patient = await getUserWithID(data.patientID);
+        const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "Unknown Patient";
+        const doctor = await getUserWithID(data.doctorID);
+        const doctorName = doctor ? `${doctor.firstName} ${doctor.lastName}` : "Unknown Doctor";
+        const modelUsed = data.modelUsed || "Unknown Model"; // Default to "Unknown Model" if not present
+        // Convert Firestore timestamp to a readable date string
+        const timeCreated = data.timeCreated?.toDate().toLocaleString() || "Unknown Time";
+
+        // Push the row data (above) into the fetchedRows array
+        fetchedRows.push({
+            batchName: data.batchName,
+            timeCreated: timeCreated, // Use the formatted date string
+            patientName: patientName,
+            batchID: doc.id, // Store the document's ID
+            doctorName: doctorName,
+            modelUsed: modelUsed,
+        });
+    }
+
     // Function to fetch batches, called on first render and when "Reload Batches" button is clicked
     const fetchBatches = async (userID) => {
         setLoading(true); // Show loading indicator during fetch
         try {
             console.log("Fetching batches for doctorID:", userID); // Debugging log
             const batchesRef = collection(db, "batches"); // Reference to the 'batches' collection
-            const batchesQuery = query(batchesRef, where("doctorID", "==", userID)); // Apply the 'where' filter
-            const querySnapshot = await getDocs(batchesQuery); // Execute the query
+            // Separate queries for doc & patient
+            // Because no user can be both doctor and patient
+            // This design allows for ViewBatches.js to be used by both doctors and patients
+            const doctorBatchesQuery = query(batchesRef, where("doctorID", "==", userID)); // Apply the 'where' filter
+            const patientBatchesQuery = query(batchesRef, where("patientID", "==", userID));
+            const [doctorSnapshot, patientSnapshot] = await Promise.all([
+                getDocs(doctorBatchesQuery),
+                getDocs(patientBatchesQuery)
+              ]);
+            // const querySnapshot = await getDocs(batchesQuery); // Execute the query
 
-            if (querySnapshot.empty) {
-                console.log("No batches found for doctorID:", userID); // Debugging log
+            if (doctorBatchesQuery.empty || patientBatchesQuery.empty) {
+                console.log("No batches found"); // Debugging log
             }
 
             const fetchedRows = [];
-            for (const doc of querySnapshot.docs) {
-                console.log("Batch found:", doc.data()); // Debugging log
-
-                // Per row data extraction (for each query document)
-                const data = doc.data();
-                const patient = await getUserWithID(data.patientID);
-                const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "Unknown Patient";
-                const doctor = await getUserWithID(userID);
-                const doctorName = doctor ? `${doctor.firstName} ${doctor.lastName}` : "Unknown Doctor";
-                const modelUsed = data.modelUsed || "Unknown Model"; // Default to "Unknown Model" if not present
-                // Convert Firestore timestamp to a readable date string
-                const timeCreated = data.timeCreated?.toDate().toLocaleString() || "Unknown Time";
-
-
-                // Push the row data (above) into the fetchedRows array
-                fetchedRows.push({
-                    batchName: data.batchName,
-                    timeCreated: timeCreated, // Use the formatted date string
-                    patientName: patientName,
-                    batchID: doc.id, // Store the document's ID
-                    doctorName: doctorName,
-                    modelUsed: modelUsed,
-                });
+            for (const doc of doctorSnapshot.docs) {
+                await docInfoExtraction(userID, fetchedRows, doc);
             }
-            
+            for (const doc of patientSnapshot.docs) {
+                await docInfoExtraction(userID, fetchedRows, doc);
+            }
+
             console.log("Fetched rows:", fetchedRows); // Debugging log
             setRows(fetchedRows); // Update state with fetched rows
         } catch (error) {

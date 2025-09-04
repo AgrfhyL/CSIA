@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Table, TableCell, TableContainer, TableBody, TableHead, TableRow, Typography, Box, Modal, CircularProgress } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Table, TableCell, TableContainer, TableBody, TableHead, TableRow, Typography, Box, Modal, CircularProgress, Button } from "@mui/material";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import axios from "axios";
 
 export function DetailsPage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { batchID, cellType, modelUsed } = location.state || {}; // Get batchID and cellType from state
     const [images, setImages] = useState([]); // Collection of images
     const [selectedRow, setSelectedRow] = useState(null); // Track the selected row
@@ -88,6 +89,16 @@ export function DetailsPage() {
 
     return (
         <div style={{ padding: "20px" }}>
+            <Button 
+                onClick={() => navigate('/home')} 
+                style={{ 
+                    position: 'fixed',
+                    top: 16,
+                    right: 16,
+                    zIndex: 1000
+                 }} 
+                variant="outlined">Back to Summary
+            </Button>
             <Typography variant="h4" style={{ marginBottom: "20px" }}>
                 Details for Cell Type: {cellType}
             </Typography>

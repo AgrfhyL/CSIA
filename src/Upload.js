@@ -6,7 +6,7 @@ import { auth } from "./firebaseConfig";
 import { PatientDropdown } from "./PatientDropdown.js";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 
-export default function Upload({ onUploadComplete }) {
+export function Upload({ onUploadComplete }) {
   const [selectedModel, setSelectedModel] = useState("");
   const [files, setFiles] = useState([]);
   const [batchName, setBatchName] = useState("");
@@ -22,6 +22,19 @@ export default function Upload({ onUploadComplete }) {
       if (rejectedFiles.length > 0) {
         alert("Please upload only JPG/JPEG images.");
         return;
+      }
+
+      // Check if files come from a folder (have relative paths)
+      const hasRelativePath = acceptedFiles.some(file => file.path && file.path.includes('/'));
+      let folderName = "";
+      
+      if (hasRelativePath) {
+        // Extract folder name from the first file's path
+        const folderPath = acceptedFiles[0].path;
+        folderName = folderPath.split("/")[0];
+        setFolderName(folderName);
+      } else {
+        setFolderName(""); // Reset folder name if individual files
       }
 
       const validateImageDimensions = (file) => {
@@ -42,13 +55,6 @@ export default function Upload({ onUploadComplete }) {
       Promise.all(acceptedFiles.map((file) => validateImageDimensions(file)))
         .then((validFiles) => {
           setFiles(validFiles);
-
-          // Extract folder name from the first file's path
-          if (validFiles.length > 0) {
-            const folderPath = validFiles[0].path || validFiles[0].name;
-            const folder = folderPath.split("/")[0]; // Get the folder name
-            setFolderName(folder);
-          }
         })
         .catch((error) => {
           alert(error.message);
@@ -150,10 +156,10 @@ export default function Upload({ onUploadComplete }) {
           textAlign: "center",
         }}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} directory="" webkitdirectory="" type="file" />
         {files.length > 0 ? (
           <div>
-            {/* Display folder name if available */}
+            {/* Display folder name only if available */}
             {folderName && (
               <p style={{ fontWeight: "bold", color: "black", marginBottom: "10px" }}>
                 Folder Name: {folderName}

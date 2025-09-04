@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Table, TableCell, TableContainer, TableBody, TableHead, TableRow } from "@mui/material";
+import { Table, TableCell, TableContainer, TableBody, TableHead, TableRow, Button } from "@mui/material";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 
 class CellType {
@@ -62,6 +62,16 @@ export function SummaryPage() {
 
     return (
         <div>
+            <Button 
+                onClick={() => navigate('/home')} 
+                style={{ 
+                    position: 'fixed',
+                    top: 16,
+                    right: 16,
+                    zIndex: 1000
+                 }} 
+                variant="outlined">Close Report
+            </Button>
             <h1>Summary for Batch: {batchName}</h1>
             <h2>Batch ID: {batchID}</h2>
             <h2>Doctor: {doctorName}</h2>
