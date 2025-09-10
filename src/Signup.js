@@ -182,7 +182,7 @@ export function Signup() {
           </Button>
 
           <Box textAlign="center">
-            <RouterLink to="/login" style={{ textDecoration: "none" }}>
+            <RouterLink to="/" style={{ textDecoration: "none" }}>
               <Typography variant="body2" color="primary">
                 Already have an account? Sign in!
               </Typography>
